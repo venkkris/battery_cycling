@@ -1,3 +1,6 @@
-delete.png
+*.png
+*.mp4
+*.mpr
 cycles/*
+time_series/*
 .DS_Store

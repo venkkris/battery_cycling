@@ -1,11 +1,13 @@
 # battery_cycling
 Script(s) to extract battery cycling data from Biologic output file (*.mpr) and make plots
 
+# Installation instructions
 
-## Explanation of headers
+
+## Explanation of headers in *.mpr file
 ```
-'flags': No idea
-'Ns': No idea
+'flags': Flags
+'Ns': Input conditions
 'time/s': Time in seconds
 'dQ/mA.h': Change transferred in time step; essentially current
 '(Q-Qo)/mA.h': Capacity referenced to initial capacity

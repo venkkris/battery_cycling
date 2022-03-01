@@ -1,35 +1,47 @@
+
 from galvani import BioLogic
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
+import glob
+import os
 
-# Convert .mpr file into a Pandas dataframe
-filename = '220218-PanasonicBR2032-90-100-C50_C14.mpr'
-mpr_file = BioLogic.MPRfile(filename)
-data = pd.DataFrame(mpr_file.data)
+###############################################################################
+# Function definitions
 
-def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)
+
+def colorFader(c1,c2,mix=0):
+    """Function to interpolate between two chosen colors.
+    fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)"""
     c1=np.array(mpl.colors.to_rgb(c1))
     c2=np.array(mpl.colors.to_rgb(c2))
     return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
 
-# Function to plot time series of voltage vs time
-# Takes as input the pandas dataframe object, quantity to be plotted on y axis, plot name
+
 def plot_time_series(data, quantity, plot_name):
+    """Function to plot time series of voltage vs time.
+
+    Arguments: 
+    data = pandas dataframe object
+    quantity = quantity to be plotted on y axis
+    plot_name = plot name"""
     plt.figure()
     plt.plot(data['time/s']/3600, data[quantity])
     plt.xlabel('Time (hr)')
     plt.ylabel(quantity)
     plt.savefig(plot_name)
-#    plt.show()
     plt.close()
 
 
-# Function to plot voltage vs capacity
-# Takes as input the pandas dataframe object
 def plot_voltage_capacity(data, plot_name, plot_title):
+    """ Function to plot voltage vs capacity.
+
+    Arguments:
+    data = pandas dataframe object
+    plot_name = plot name
+    plot_title = plot title"""
     plt.figure()
 #    plt.plot(-1*data['(Q-Qo)/mA.h'], data['Ewe/V'], '-*')
     plt.plot(-1*data['Q charge/discharge/mA.h'], data['Ewe/V'], '-o')
@@ -38,9 +50,36 @@ def plot_voltage_capacity(data, plot_name, plot_title):
     plt.title(plot_title)
     plt.ylim(1.5, 4.8)
     plt.savefig(plot_name)
-#    plt.show()
     plt.close()
 
+
+# Function to plot all the important time series plots
+def plot_all_time_series(data):
+    """Function to plot all the time series plots.
+
+    Arguments:
+    data = pandas dataframe object"""
+    plot_time_series(data=data, quantity='Ewe/V', plot_name='time_series/voltage.png')
+    plot_time_series(data=data, quantity='Q charge/discharge/mA.h', plot_name='time_series/charge_per_cycle.png')
+    plot_time_series(data=data, quantity='(Q-Qo)/mA.h', plot_name='time_series/charge_referenced_to_initial.png')
+    plot_time_series(data=data, quantity='control/V/mA', plot_name='time_series/control.png')
+    plot_time_series(data=data, quantity='dQ/mA.h', plot_name='time_series/dQ.png')
+    plot_time_series(data=data, quantity='Ns', plot_name='time_series/Ns.png')
+
+  
+###############################################################################
+# Main
+# Make directories for plots
+os.makedirs('time_series',exist_ok=True)
+os.makedirs('cycles',exist_ok=True)
+
+# Read data from mpr file into pandas dataframe object
+filename = glob.glob('*.mpr')[0]
+mpr_file = BioLogic.MPRfile(filename)
+data = pd.DataFrame(mpr_file.data)
+
+# Plot all imp. time series data
+plot_all_time_series(data)
 
 
 # Plot cycling data
@@ -81,9 +120,9 @@ for index in grouped.indices.keys():
         ch += 1
 
 
-# Save to video in ./cycles/ directory
-disch_video = cv2.VideoWriter('cycles/discharge.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
-ch_video = cv2.VideoWriter('cycles/charge.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
+# Save to video
+disch_video = cv2.VideoWriter('discharge.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
+ch_video = cv2.VideoWriter('charge.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
 for image in disch_images:
     disch_video.write(image)
 for image in ch_images:
@@ -104,8 +143,7 @@ plt.title('Discharge cycles')
 plt.xlabel('Capacity (mAh)')
 plt.ylabel('Voltage (V)')
 plt.ylim(1.5, 4.8)
-plt.savefig('cycles/all_discharge_cycles.png')
-plt.show()
+plt.savefig('all_discharge_cycles.png')
 plt.close()
 
 
@@ -121,6 +159,5 @@ plt.title('Charge cycles')
 plt.xlabel('Capacity (mAh)')
 plt.ylabel('Voltage (V)')
 plt.ylim(1.5, 4.8)
-plt.savefig('cycles/all_charge_cycles.png')
-plt.show()
+plt.savefig('all_charge_cycles.png')
 plt.close()
