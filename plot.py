@@ -9,12 +9,12 @@ data = pd.DataFrame(mpr_file.data)
 
 # Function to plot time series of voltage vs time
 # Takes as input the pandas dataframe object
-def plot_time_series(data):
+def plot_time_series(data, quantity, plot_name):
     plt.figure()
-    plt.plot(data['time/s']/3600, data['Ewe/V'])
+    plt.plot(data['time/s']/3600, data[quantity])
     plt.xlabel('Time (hr)')
-    plt.ylabel('Voltage (V)')
-    # plt.savefig('time_series.png')
+    plt.ylabel(quantity)
+    plt.savefig(plot_name)
     plt.show()
 
 
@@ -25,28 +25,28 @@ def plot_voltage_capacity(data):
     plt.plot(-1*data['(Q-Qo)/mA.h'], data['Ewe/V'])
     plt.xlabel('Capacity (Ah)')
     plt.ylabel('Voltage (V)')
-    # plt.savefig('voltage_capacity.png')
+    plt.savefig('voltage_vs_capacity.png')
     plt.show()
 
-
-# Function to plot voltage vs dq
-# Takes as input the pandas dataframe object
-def plot_time_series_half_cycle(data):
-    plt.figure()
-    plt.plot(data['time/s'], data['half cycle'])
-    plt.xlabel('time')
-    plt.ylabel('half cycle')
-    # plt.savefig('voltage_dq.png')
-    plt.show()
 
 
 # Preliminary data analysis
-# print(data.axes)
-print(data)
+# print(data[0:20])
 
 
 # Plots
-# plot_time_series(data)
+plot_time_series(data, 'control/V/mA', 'control_ts.png')
 # plot_voltage_capacity(data)
-plot_time_series_half_cycle(data)
-print(data['half cycle'])
+
+
+
+# Explanation of headers
+# 'flags': No idea
+# 'Ns': No idea
+# 'time/s': Time in seconds
+# 'dQ/mA.h': Change transferred in time step; essentially current
+# '(Q-Qo)/mA.h': Capacity referenced to initial capacity
+# 'control/V/mA': Control voltage or current
+# 'Ewe/V': Voltage of the cell
+# 'Q charge/discharge/mA.h': Capacity discharged or charged; resets to zero after switching cycles; negative for discharge
+# 'half cycle': No idea; probably an index of when it switches from charging to discharging
