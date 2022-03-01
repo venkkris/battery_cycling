@@ -4,8 +4,8 @@ Script(s) to extract battery cycling data from Biologic output file (*.mpr) and 
 # Installation instructions
 One of the main dependencies is [Galvani](https://github.com/echemdata/galvani), used to parse the *.mpr file and get a Pandas DataFrame object. It's strongly recommended to create a conda environment for running the script using the provided 'environment.yml' yaml file.
 
-1. Create a conda environment using the command `conda env create --name env_name --file environment.yml`. Replace env_name in the command with your preferred name for the environment. Activate said environment.
-2. Clone the repo using `git clone https://github.com/venkkris/battery_cycling` and switch to that directory/folder.
+1. Clone the repo using `git clone https://github.com/venkkris/battery_cycling` and switch to that directory/folder.
+2. Create a conda environment using the command `conda env create --name env_name --file environment.yml`. Replace env_name in the command with your preferred name for the environment. Activate said environment.
 3. Preferrably, create a new sub-directory with the plot.py script and the .mpr file in it, and execute the plot.py script using `python plot.py`. 
 
 # Explanation of headers in *.mpr file
