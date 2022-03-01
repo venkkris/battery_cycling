@@ -4,7 +4,7 @@ Script(s) to extract battery cycling data from Biologic output file (*.mpr) and 
 # Installation instructions
 
 
-## Explanation of headers in *.mpr file
+# Explanation of headers in *.mpr file
 ```
 'flags': Flags
 'Ns': Input conditions
