@@ -9,6 +9,11 @@ import glob
 import os
 
 ###############################################################################
+# Important variables
+voltage_limits = [1.5, 4.8]     # Voltage limits for all plots
+remove_OCV_part = True          # Removes OCV part for plot of each cycle; not removed for time series plots
+same_xlim_every_cycle = True    # Uses same xlim i.e. charge/discharge capacity for all cycles
+###############################################################################
 # Function definitions
 
 
@@ -48,12 +53,11 @@ def plot_voltage_capacity(data, plot_name, plot_title):
     plt.xlabel('Capacity (mAh)')
     plt.ylabel('Voltage (V)')
     plt.title(plot_title)
-    plt.ylim(1.5, 4.8)
+    plt.ylim(voltage_limits)
     plt.savefig(plot_name)
     plt.close()
 
 
-# Function to plot all the important time series plots
 def plot_all_time_series(data):
     """Function to plot all the time series plots.
 
@@ -65,6 +69,7 @@ def plot_all_time_series(data):
     plot_time_series(data=data, quantity='control/V/mA', plot_name='time_series/control.png')
     plot_time_series(data=data, quantity='dQ/mA.h', plot_name='time_series/dQ.png')
     plot_time_series(data=data, quantity='Ns', plot_name='time_series/Ns.png')
+    plot_time_series(data=data, quantity='half cycle', plot_name='time_series/half_cycle.png')
 
   
 ###############################################################################
@@ -81,7 +86,18 @@ data = pd.DataFrame(mpr_file.data)
 # Plot all imp. time series data
 plot_all_time_series(data)
 
+# Plot voltage vs capacity referenced to initial capacity
+plt.figure()
+plt.plot(-1*data['(Q-Qo)/mA.h'], data['Ewe/V'], '-')
+plt.xlabel('Capacity (mAh)')
+plt.ylabel('Voltage (V)')
+plt.ylim(voltage_limits)
+plt.title('Voltage vs Capacity')
+plt.savefig('voltage_vs_capacity.png')
+plt.close()
 
+
+###############################################################################
 # Plot cycling data
 # Assumption: Always start with 1st discharge, then 1st charge
 disch = 1           # Index
@@ -91,9 +107,12 @@ ch_images = []      # Array of charge images
 color1 = 'red'
 color2 = 'black'
 
+# Remove OCV part for all cycles
+if remove_OCV_part:
+    data.drop(data[data['dQ/mA.h'] == 0].index, inplace=True)
 
 # Split into groups based on half cycles
-grouped = data.groupby("half cycle", sort=False)
+grouped = data.groupby("half cycle", sort=False)    
 
 # Plot each charge and discharge cycle as separate plot
 for index in grouped.indices.keys():
@@ -131,6 +150,7 @@ disch_video.release()
 ch_video.release()
 
 
+###############################################################################
 # Plot all discharge cycles in a single plot
 plt.figure()
 counter = 0
@@ -161,3 +181,4 @@ plt.ylabel('Voltage (V)')
 plt.ylim(1.5, 4.8)
 plt.savefig('all_charge_cycles.png')
 plt.close()
+###############################################################################
