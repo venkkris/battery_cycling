@@ -1,6 +1,7 @@
 *.png
 *.mp4
 *.mpr
+*.txt
 cycles/*
 time_series/*
 .DS_Store

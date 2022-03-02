@@ -1,5 +1,5 @@
-# battery_cycling
-Script(s) to extract battery cycling data from Biologic output file (*.mpr) and make plots
+# Reduced Effort Biologic Electrochemical Cell Cycling Analysis (REBECCA)
+Script(s) to extract battery cycling data from Biologic output file (*.mpr) and make plots for data analysis.
 
 # Installation instructions
 One of the main dependencies is [Galvani](https://github.com/echemdata/galvani), used to parse the *.mpr file and get a Pandas DataFrame object. It's strongly recommended to create a conda environment for running the script using the provided 'environment.yml' yaml file.

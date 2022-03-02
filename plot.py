@@ -10,12 +10,15 @@ import os
 
 ###############################################################################
 # Important variables
-voltage_limits = [1.5, 4.8]     # Voltage limits for all plots
-remove_OCV_part = True          # Removes OCV part for plot of each cycle; not removed for time series plots
-same_xlim_every_cycle = True    # Uses same xlim i.e. charge/discharge capacity for all cycles
+###############################################################################
+
+same_xlim_every_cycle = True     # Uses same xlim i.e. charge/discharge capacity for all cycles
+voltage_limits = [1.5, 4.8]      # Voltage limits for all plots
+remove_OCV_part = True           # Removes OCV part for plot of each cycle; not removed for time series plots
+
 ###############################################################################
 # Function definitions
-
+###############################################################################
 
 def colorFader(c1,c2,mix=0):
     """Function to interpolate between two chosen colors.
@@ -53,6 +56,8 @@ def plot_voltage_capacity(data, plot_name, plot_title):
     plt.xlabel('Capacity (mAh)')
     plt.ylabel('Voltage (V)')
     plt.title(plot_title)
+    if same_xlim_every_cycle:
+        plt.xlim(*xlim)
     plt.ylim(voltage_limits)
     plt.savefig(plot_name)
     plt.close()
@@ -71,9 +76,10 @@ def plot_all_time_series(data):
     plot_time_series(data=data, quantity='Ns', plot_name='time_series/Ns.png')
     plot_time_series(data=data, quantity='half cycle', plot_name='time_series/half_cycle.png')
 
-  
 ###############################################################################
 # Main
+###############################################################################
+
 # Make directories for plots
 os.makedirs('time_series',exist_ok=True)
 os.makedirs('cycles',exist_ok=True)
@@ -96,14 +102,16 @@ plt.title('Voltage vs Capacity')
 plt.savefig('voltage_vs_capacity.png')
 plt.close()
 
-
 ###############################################################################
 # Plot cycling data
+###############################################################################
 # Assumption: Always start with 1st discharge, then 1st charge
 disch = 1           # Index
 ch = 1              # Index
 disch_images = []   # Array of discharge images
 ch_images = []      # Array of charge images
+disch_capacity = [] # Array of discharge capacity
+ch_capacity = []    # Array of charge capacity
 color1 = 'red'
 color2 = 'black'
 
@@ -114,12 +122,39 @@ if remove_OCV_part:
 # Split into groups based on half cycles
 grouped = data.groupby("half cycle", sort=False)    
 
+# Get discharge and charge capacity for each cycle, plot them
+for name, group in grouped:
+    if group['control/V/mA'].iloc[10] < 0:
+        disch_capacity.append(max(-1*group['Q charge/discharge/mA.h']))
+    elif group['control/V/mA'].iloc[10] > 0:
+        ch_capacity.append(max(group['Q charge/discharge/mA.h']))
+np.savetxt('discharge_capacities.txt', np.array(disch_capacity))
+np.savetxt('charge_capacities.txt', np.array(ch_capacity))
+
+plt.figure()
+plt.plot(np.arange(start=1, stop=len(disch_capacity)+1, step=1), disch_capacity, '-o')
+plt.xlabel('Number of cycles')
+plt.ylabel('Discharge capacity (mAh)')
+plt.title('Discharge capacity vs Number of cycles')
+plt.savefig('discharge_capacity_vs_cycles.png')
+plt.close()
+
+plt.figure()
+plt.plot(np.arange(start=1, stop=len(ch_capacity)+1, step=1), ch_capacity, '-o')
+plt.xlabel('Number of cycles')
+plt.ylabel('Charge capacity (mAh)')
+plt.title('Charge capacity vs Number of cycles')
+plt.savefig('charge_capacity_vs_cycles.png')
+plt.close()
+
+
 # Plot each charge and discharge cycle as separate plot
 for index in grouped.indices.keys():
 
     # If discharge i.e. current is negative
     if grouped.get_group(index)['control/V/mA'].iloc[10] < 0:
-        data = grouped.get_group(index)
+        if same_xlim_every_cycle:
+            xlim = (0, max(disch_capacity))
         plot_voltage_capacity(data=grouped.get_group(index), 
         plot_name='cycles/discharge_' + str(disch) + '.png', 
         plot_title=str(disch) + '$^{th}$ discharge')
@@ -129,7 +164,11 @@ for index in grouped.indices.keys():
         size = (width, height)
         disch_images.append(img)
         disch += 1
-    else: # Then this is the charge cycle
+
+    # Charge cycle
+    elif grouped.get_group(index)['control/V/mA'].iloc[10] > 0:
+        if same_xlim_every_cycle:
+            xlim = (-1*max(ch_capacity), 0)
         plot_voltage_capacity(data=grouped.get_group(index), 
         plot_name='cycles/charge_' + str(ch) + '.png', 
         plot_title=str(ch) + '$^{th}$ charge')
@@ -152,6 +191,7 @@ ch_video.release()
 
 ###############################################################################
 # Plot all discharge cycles in a single plot
+###############################################################################
 plt.figure()
 counter = 0
 for index in grouped.indices.keys():
@@ -163,7 +203,7 @@ plt.title('Discharge cycles')
 plt.xlabel('Capacity (mAh)')
 plt.ylabel('Voltage (V)')
 plt.ylim(1.5, 4.8)
-plt.savefig('all_discharge_cycles.png')
+plt.savefig('combined_discharge_profiles.png')
 plt.close()
 
 
@@ -179,6 +219,6 @@ plt.title('Charge cycles')
 plt.xlabel('Capacity (mAh)')
 plt.ylabel('Voltage (V)')
 plt.ylim(1.5, 4.8)
-plt.savefig('all_charge_cycles.png')
+plt.savefig('combined_charge_profiles.png')
 plt.close()
 ###############################################################################
