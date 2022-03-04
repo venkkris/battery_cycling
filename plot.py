@@ -15,9 +15,9 @@ import os
 # Important variables
 ###############################################################################
 
-same_xlim_every_cycle = False     # Uses same xlim i.e. charge/discharge capacity for all cycles
-voltage_limits = [1.5, 4.8]      # Voltage limits for all plots
-remove_OCV_part = True           # Removes OCV part for plot of each cycle; not removed for time series plots
+same_xlim_every_cycle = True
+voltage_limits = [1.5, 4.8]
+remove_OCV_part = True
 color1 = 'red'
 color2 = 'black'
 
@@ -181,7 +181,7 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
             plt.title(str(disch) + '$^{th}$ discharge')
             plt.ylim(voltage_limits)
             if same_xlim_every_cycle == True:
-                plt.xlim = ([0, max(disch_capacity)])
+                plt.xlim([0, max(disch_capacity)])
             plt.savefig('cycles/discharge_' + str(disch) + '.png')
             plt.close()
 
@@ -200,7 +200,7 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
             plt.title(str(ch) + '$^{th}$ charge')
             plt.ylim(voltage_limits)
             if same_xlim_every_cycle == True:
-                plt.xlim = ([0, max(ch_capacity)])
+                plt.xlim([0, max(ch_capacity)])
             plt.savefig('cycles/charge_' + str(ch) + '.png')
             plt.close()
 

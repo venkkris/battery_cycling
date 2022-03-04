@@ -7,4 +7,6 @@ rm *.png
 rm *.mp4
 rm -r time_series/
 rm -r cycles/
+
+rm plot.py
 rm cleanup.sh
