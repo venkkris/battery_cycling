@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# Author: Venkatesh Krishnamurthy
+# This script is used to clear all previous plots, videos and txt files and then execute plot.py
 clear
 rm cycles/*
 rm time_series/*
