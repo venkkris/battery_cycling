@@ -13,8 +13,8 @@ One of the main dependencies is [Galvani](https://github.com/echemdata/galvani),
 ### Alternate installation instructions
 1. Create a conda environment using the command `conda create --name env_name python=3.7`. Replace env_name with a name to your preferrence for the environment.
 2. Switch to the newly created conda environment using the command `conda activate env_name`. Replace env_name with the name you gave in the previous step.
-3. Next, install required dependencies using the following commands in succession: `pip install numpy`, `pip install scipy`, `pip install matplotlib`, `pip install pandas`, `pip install opencv-python` and `pip install galvani`.
-4. Switch to a directory (i.e. folder) of your choice and type the command `git clone https://github.com/venkkris/battery_cycling`. This would create a new directory in your present working directory named battery_cycling and will contain the files needed for the execution of this script.
+3. Switch to a directory (i.e. folder) of your choice and type the command `git clone https://github.com/venkkris/battery_cycling`. This would create a new directory in your present working directory named battery_cycling and will contain the files needed for the execution of this script.
+4. Next, install required dependencies using the following command from inside the battery_cycling/ directory: `pip install -r requirements.txt`.
 
 ### Testing
 Switch to the test/ directory. Copy plot.py from the parent directory and execute it using the command `python plot.py`. A series of output files will be generated duirng script execution. If you want to clean up the test directory, use the cleanup.sh script from the parent directory.
