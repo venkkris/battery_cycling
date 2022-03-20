@@ -185,11 +185,16 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
             plt.savefig('cycles/discharge_' + str(disch) + '.png')
             plt.close()
 
+            # Add image to array
             img = cv2.imread('cycles/discharge_' + str(disch) + '.png')
             height, width, layers = img.shape
             size = (width, height)
             disch_images.append(img)
+
+            # Save raw data to csv file
+            np.savetxt('cycles/discharge_' + str(disch) + '.csv', np.column_stack((-1*group['Q charge/discharge/mA.h'], group['Ewe/V'])), delimiter=',')
             disch += 1
+
 
         # Charge cycle
         else:
@@ -204,8 +209,12 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
             plt.savefig('cycles/charge_' + str(ch) + '.png')
             plt.close()
 
+            # Add image to array
             img = cv2.imread('cycles/charge_' + str(ch) + '.png')
             ch_images.append(img)
+
+            # Save raw data to csv file
+            np.savetxt('cycles/charge_' + str(ch) + '.csv', np.column_stack((group['Q charge/discharge/mA.h'], group['Ewe/V'])), delimiter=',')
             ch += 1
 
 
@@ -228,7 +237,7 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
     plt.figure()
     counter = 0
     for index in grouped.indices.keys():
-        if grouped.get_group(index)['control/V/mA'].iloc[10] < 0:
+        if is_it_discharging(grouped.get_group(index)) == True:
             data = grouped.get_group(index)
             plt.plot(-1*data['Q charge/discharge/mA.h'], data['Ewe/V'], 
             color=colorFader(color1, color2, counter/len(disch_images)))
@@ -247,7 +256,7 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
     plt.figure()
     counter = 0
     for index in grouped.indices.keys():
-        if grouped.get_group(index)['control/V/mA'].iloc[10] > 0:
+        if is_it_discharging(grouped.get_group(index)) == False:
             data = grouped.get_group(index)
             plt.plot(data['Q charge/discharge/mA.h'], data['Ewe/V'], 
             color=colorFader(color1, color2, counter/len(ch_images)))
@@ -264,9 +273,6 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
 # Main
 ###############################################################################
 
-# Make directories for plots
-os.makedirs('time_series', exist_ok=True)
-os.makedirs('cycles', exist_ok=True)
 
 # Read data from mpr file into pandas dataframe object
 filename = glob.glob('*.mpr')[0]
@@ -274,6 +280,7 @@ mpr_file = BioLogic.MPRfile(filename)
 data = pd.DataFrame(mpr_file.data)
 
 # Plot all imp. time series data
+os.makedirs('time_series', exist_ok=True)
 plot_all_time_series(data)
 
 # Plot voltage vs capacity referenced to initial capacity
@@ -287,6 +294,7 @@ if remove_OCV_part:
 disch_capacity, ch_capacity = plot_capacity_vs_cycle(data)
 
 # Plot charge/discharge profiles
+os.makedirs('cycles', exist_ok=True)
 plot_charge_discharge_profiles(data, disch_capacity, ch_capacity)
 ###############################################################################
 
