@@ -83,6 +83,7 @@ def plot_all_time_series(data):
 # Make directories for plots
 os.makedirs('time_series',exist_ok=True)
 os.makedirs('cycles',exist_ok=True)
+os.makedirs('main_out',exist_ok=True)
 
 # Read data from mpr file into pandas dataframe object
 filename = glob.glob('*.mpr')[0]
@@ -99,7 +100,7 @@ plt.xlabel('Capacity (mAh)')
 plt.ylabel('Voltage (V)')
 plt.ylim(voltage_limits)
 plt.title('Voltage vs Capacity')
-plt.savefig('voltage_vs_capacity.png')
+plt.savefig('main_out/voltage_vs_capacity.png')
 plt.close()
 
 ###############################################################################
@@ -128,23 +129,25 @@ for name, group in grouped:
         disch_capacity.append(max(-1*group['Q charge/discharge/mA.h']))
     elif group['control/V/mA'].iloc[10] > 0:
         ch_capacity.append(max(group['Q charge/discharge/mA.h']))
-np.savetxt('discharge_capacities.txt', np.array(disch_capacity))
-np.savetxt('charge_capacities.txt', np.array(ch_capacity))
+np.savetxt('main_out/discharge_capacities.txt', np.array(disch_capacity))
+np.savetxt('main_out/charge_capacities.txt', np.array(ch_capacity))
 
 plt.figure()
 plt.plot(np.arange(start=1, stop=len(disch_capacity)+1, step=1), disch_capacity, '-o')
 plt.xlabel('Number of cycles')
 plt.ylabel('Discharge capacity (mAh)')
+plt.ylim(bottom=0)
 plt.title('Discharge capacity vs Number of cycles')
-plt.savefig('discharge_capacity_vs_cycles.png')
+plt.savefig('main_out/discharge_capacity_vs_cycles.png')
 plt.close()
 
 plt.figure()
 plt.plot(np.arange(start=1, stop=len(ch_capacity)+1, step=1), ch_capacity, '-o')
 plt.xlabel('Number of cycles')
 plt.ylabel('Charge capacity (mAh)')
+plt.ylim(bottom=0)
 plt.title('Charge capacity vs Number of cycles')
-plt.savefig('charge_capacity_vs_cycles.png')
+plt.savefig('main_out/charge_capacity_vs_cycles.png')
 plt.close()
 
 
@@ -179,8 +182,8 @@ for index in grouped.indices.keys():
 
 
 # Save to video
-disch_video = cv2.VideoWriter('discharge.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
-ch_video = cv2.VideoWriter('charge.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
+disch_video = cv2.VideoWriter('main_out/discharge.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
+ch_video = cv2.VideoWriter('main_out/charge.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
 for image in disch_images:
     disch_video.write(image)
 for image in ch_images:
@@ -203,7 +206,7 @@ plt.title('Discharge cycles')
 plt.xlabel('Capacity (mAh)')
 plt.ylabel('Voltage (V)')
 plt.ylim(1.5, 4.8)
-plt.savefig('combined_discharge_profiles.png')
+plt.savefig('main_out/combined_discharge_profiles.png')
 plt.close()
 
 
@@ -219,6 +222,8 @@ plt.title('Charge cycles')
 plt.xlabel('Capacity (mAh)')
 plt.ylabel('Voltage (V)')
 plt.ylim(1.5, 4.8)
-plt.savefig('combined_charge_profiles.png')
+plt.savefig('main_out/combined_charge_profiles.png')
 plt.close()
 ###############################################################################
+
+print("Done")
