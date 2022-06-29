@@ -1,7 +1,7 @@
-*.png
-*.mp4
-*.mpr
-*.txt
-cycles/*
-time_series/*
 .DS_Store
+test/*.png
+test/*.txt
+test/*.mp4
+test/*.py
+test/*.sh
+test/*/*
