@@ -5,3 +5,4 @@ test/*.mp4
 test/*.py
 test/*.sh
 test/*/*
+ops/*
