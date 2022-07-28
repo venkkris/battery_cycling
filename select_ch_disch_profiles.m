@@ -6,7 +6,7 @@ clear all;
 
 % cycle_num = [1, 50, 100, 150, 200];
 cycle_num = [1, 5, 10, 15, 20];
-filename = 'selected_profiles.png';
+filename = 'pretty_plots/selected_profiles.png';
 vlim = [1.5, 4.6];
 
 legend_str = {'Cycle '+string(cycle_num(1)), 'Cycle '+string(cycle_num(2)), 'Cycle '+string(cycle_num(3)), 'Cycle '+string(cycle_num(4)), 'Cycle '+string(cycle_num(5))};

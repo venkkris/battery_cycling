@@ -88,6 +88,7 @@ def plot_all_time_series(data):
     plot_time_series(data=data, quantity='dQ/mA.h', plot_name='time_series/dQ.png')
     plot_time_series(data=data, quantity='Ns', plot_name='time_series/Ns.png')
     plot_time_series(data=data, quantity='half cycle', plot_name='time_series/half_cycle.png')
+    print('Plotted all time series data.')
 
 
 def plot_voltage_capacity(data, plot_name, plot_title):
@@ -122,10 +123,13 @@ def plot_voltage_capacity_ref_initial(data):
     plt.ylim(voltage_limits)
     plt.savefig('main_out/voltage_vs_capacity.png')
     plt.close()
-    
+    print('Plotted voltage vs capacity referenced to initial capacity.')
+
 
 def plot_capacity_vs_cycle(data):
     """Function to plot charge/discharge capacity vs cycles.
+    Also plots Coulombic efficiency vs cycles.
+
     Argument:
     data = pandas dataframe object
     
@@ -147,6 +151,7 @@ def plot_capacity_vs_cycle(data):
     np.savetxt('main_out/discharge_capacities.txt', np.array(disch_capacity))
     np.savetxt('main_out/charge_capacities.txt', np.array(ch_capacity))
 
+    # Plot Discharge capacity vs cycles
     plt.figure()
     plt.plot(np.arange(start=1, stop=len(disch_capacity)+1, step=1), 
     disch_capacity, '-o')
@@ -159,6 +164,7 @@ def plot_capacity_vs_cycle(data):
     plt.close()
 
 
+    # Plot Charge capacity vs cycles
     plt.figure()
     plt.plot(np.arange(start=1, stop=len(ch_capacity)+1, step=1), 
     ch_capacity, '-o')
@@ -169,6 +175,28 @@ def plot_capacity_vs_cycle(data):
     plt.title('Charge capacity vs Number of cycles')
     plt.savefig('main_out/charge_capacity_vs_cycles.png')
     plt.close()
+    print('Plotted charge/discharge capacity vs cycles.')
+
+
+    # Plot Coulombic efficiency vs cycles
+    num_cycles = min(len(ch_capacity), len(disch_capacity))
+    x = np.arange(start=1, stop=num_cycles+1, step=1)
+    y = np.array(ch_capacity[:num_cycles])/np.array(disch_capacity[:num_cycles])
+    y = np.multiply(100, y)
+
+    plt.figure()
+    plt.plot(x, y, '-o')
+    plt.plot(x, [100]*len(x), '-')   # Plot 100% line
+    plt.xlabel('Number of cycles')
+    plt.ylabel('Coulombic efficiency (%)')
+    plt.xlim(-1, num_cycles+2)
+    plt.ylim(min(y)-2, max(y)+2)
+    plt.title('Coulombic efficiency vs Number of cycles')
+    plt.savefig('main_out/coulombic_efficiency_vs_cycles.png')
+    plt.close()
+    np.savetxt('main_out/coulombic_efficiencies.txt', np.array(y))
+    print('Plotted Coulombic efficiency vs cycles.')
+
     return disch_capacity, ch_capacity
 
 
@@ -310,17 +338,19 @@ startTime = datetime.now()
 os.makedirs('time_series',exist_ok=True)
 os.makedirs('cycles',exist_ok=True)
 os.makedirs('main_out',exist_ok=True)
+os.makedirs('pretty_plots/',exist_ok=True)
 
 
 # Read data from mpr file into pandas dataframe object
 gcpl_filelist = glob.glob('*_GCPL_*.mpr')   # List of files with 'GCPL' in filename
-
 data = pd.DataFrame()   #Initialize empty dataframe
-"""In tests with multiple steps, e.g. EIS and GCPL, the Biologic inserts a tag
+"""
+In tests with multiple steps, e.g. EIS and GCPL, the Biologic inserts a tag
 into each filename with the type of step. If there are multiple GCPL steps in
 a given test protocol and stitch_files is True, this loop will concatenate them
 into a single dataframe. If either condition is not met, it defaults to the
-first .mpr file it finds."""
+first .mpr file it finds.
+"""
 if len(gcpl_filelist) > 0 and stitch_files:
     for filename in gcpl_filelist:
         mpr_file = BioLogic.MPRfile(filename)
@@ -333,12 +363,10 @@ else:
 
 # Plot all imp. time series data
 plot_all_time_series(data)
-print('Plotted all time series data.')
 
 
 # Plot voltage vs capacity referenced to initial capacity
 plot_voltage_capacity_ref_initial(data)
-print('Plotted voltage vs capacity referenced to initial capacity.')
 
 
 # Remove OCV part for all cycles
@@ -348,7 +376,6 @@ if remove_OCV_part:
 
 # Plot charge/discharge capacity vs cycles
 disch_capacity, ch_capacity = plot_capacity_vs_cycle(data)
-print('Plotted charge/discharge capacity vs cycles.')
 
 
 # Plot charge/discharge profiles
