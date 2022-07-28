@@ -91,26 +91,6 @@ def plot_all_time_series(data):
     print('Plotted all time series data.')
 
 
-def plot_voltage_capacity(data, plot_name, plot_title):
-    """ Function to plot voltage vs capacity.
-
-    Arguments:
-    data = pandas dataframe object
-    plot_name = plot name
-    plot_title = plot title"""
-    plt.figure()
-#    plt.plot(-1*data['(Q-Qo)/mA.h'], data['Ewe/V'], '-*')
-    plt.plot(-1*data['Q charge/discharge/mA.h'], data['Ewe/V'], '-o')
-    plt.xlabel('Capacity (mAh)')
-    plt.ylabel('Voltage (V)')
-    plt.title(plot_title)
-    if same_xlim_every_cycle:
-        plt.xlim(*xlim)
-    plt.ylim(voltage_limits)
-    plt.savefig(plot_name)
-    plt.close()
-
-
 def plot_voltage_capacity_ref_initial(data):
     """Function to plot voltage vs capacity referenced to initial capacity.
     
@@ -323,7 +303,7 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
     plt.ylim(voltage_limits)
     plt.savefig('main_out/combined_charge_profiles.png')
     plt.close()
-
+    print('Plotted charge/discharge profiles.')
 
 
 
@@ -380,7 +360,6 @@ disch_capacity, ch_capacity = plot_capacity_vs_cycle(data)
 
 # Plot charge/discharge profiles
 plot_charge_discharge_profiles(data, disch_capacity, ch_capacity)
-print('Plotted charge/discharge profiles.')
 
 
 print("Finished execution in %s."  % (datetime.now() - startTime) )
