@@ -1,5 +1,6 @@
 """
-Author: Venkatesh Krishnamurthy. Copyright 2022.
+Author: Venkatesh Krishnamurthy. Copyright 2022. 
+Minor contributions by Chris Eschler.
 """
 
 from galvani import BioLogic
@@ -10,6 +11,8 @@ import cv2
 import numpy as np
 import glob
 import os
+from datetime import datetime
+
 
 ###############################################################################
 # Important variables
@@ -152,7 +155,7 @@ def plot_capacity_vs_cycle(data):
     plt.xlim(1, len(disch_capacity)+1)
     plt.ylim(0, 1.05*max(disch_capacity))
     plt.title('Discharge capacity vs Number of cycles')
-    plt.savefig('discharge_capacity_vs_cycles.png')
+    plt.savefig('main_out/discharge_capacity_vs_cycles.png')
     plt.close()
 
 
@@ -164,7 +167,7 @@ def plot_capacity_vs_cycle(data):
     plt.xlim(1, len(ch_capacity)+1)
     plt.ylim(0, 1.05*max(ch_capacity))
     plt.title('Charge capacity vs Number of cycles')
-    plt.savefig('charge_capacity_vs_cycles.png')
+    plt.savefig('main_out/charge_capacity_vs_cycles.png')
     plt.close()
     return disch_capacity, ch_capacity
 
@@ -290,193 +293,12 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
     plt.close()
 
 
-def plot_voltage_capacity_ref_initial(data):
-    """Function to plot voltage vs capacity referenced to initial capacity.
-    
-    Argument: 
-    data = pandas dataframe object"""
-    plt.figure()
-    plt.plot(-1*data['(Q-Qo)/mA.h'], data['Ewe/V'], '-')
-    plt.xlabel('Capacity (mAh)')
-    plt.ylabel('Voltage (V)')
-    plt.ylim(voltage_limits)
-    plt.savefig('voltage_vs_capacity.png')
-    plt.close()
-
-
-def plot_capacity_vs_cycle(data):
-    """Function to plot charge/discharge capacity vs cycles.
-
-    Argument:
-    data = pandas dataframe object
-    
-    Returns:
-    disharge capacity (array), charge capacity (array)
-    """
-
-    grouped = data.groupby("half cycle", sort=False)
-    disch_capacity = []
-    ch_capacity = []
-
-    # Get discharge and charge capacity for each cycle, plot them
-    for name, group in grouped:
-        if is_it_discharging(group) == True:
-            disch_capacity.append(max(-1*group['Q charge/discharge/mA.h']))
-        else:
-            ch_capacity.append(max(group['Q charge/discharge/mA.h']))
-
-    np.savetxt('discharge_capacities.txt', np.array(disch_capacity))
-    np.savetxt('charge_capacities.txt', np.array(ch_capacity))
-
-    plt.figure()
-    plt.plot(np.arange(start=1, stop=len(disch_capacity)+1, step=1), 
-    disch_capacity, '-o')
-    plt.xlabel('Number of cycles')
-    plt.ylabel('Discharge capacity (mAh)')
-    plt.xlim(1, len(disch_capacity)+1)
-    plt.ylim(0, 1.05*max(disch_capacity))
-    plt.title('Discharge capacity vs Number of cycles')
-    plt.savefig('discharge_capacity_vs_cycles.png')
-    plt.close()
-
-    plt.figure()
-    plt.plot(np.arange(start=1, stop=len(ch_capacity)+1, step=1), 
-    ch_capacity, '-o')
-    plt.xlabel('Number of cycles')
-    plt.ylabel('Charge capacity (mAh)')
-    plt.xlim(1, len(ch_capacity)+1)
-    plt.ylim(0, 1.05*max(ch_capacity))
-    plt.title('Charge capacity vs Number of cycles')
-    plt.savefig('charge_capacity_vs_cycles.png')
-    plt.close()
-    return disch_capacity, ch_capacity
-
-
-def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
-    """Plots charge/discharge profiles for each cycle in cycles/ directory,
-    makes a video of those plots, and
-    plots all charge and discharge profiles in a single plot.
-
-    Arguments:
-    data = Pandas DataFrame object
-    disch_capacity = array of discharge capacities 
-    ch_capacity + array of charge capacities
-    
-    Note:
-    arrays of ch. and disch. capacities are returned by plot_capacity_vs_cycle
-    """
-    disch_images = []   # Array of discharge images
-    ch_images = []      # Array of charge images
-    disch = 1
-    ch = 1
-
-
-    ###############################################################################
-    # Plot each charge and discharge profile in cycles/ directory
-    ###############################################################################
-    grouped = data.groupby("half cycle", sort=False)
-    for name, group in grouped:
-
-        # If discharge i.e. current is negative
-        if is_it_discharging(group) == True:
-            plt.figure()
-            plt.plot(-1*group['Q charge/discharge/mA.h'], group['Ewe/V'], '-o')
-            plt.xlabel('Capacity (mAh)')
-            plt.ylabel('Voltage (V)')
-            plt.title(str(disch) + '$^{th}$ discharge')
-            plt.ylim(voltage_limits)
-            if same_xlim_every_cycle == True:
-                plt.xlim([0, max(disch_capacity)])
-            plt.savefig('cycles/discharge_' + str(disch) + '.png')
-            plt.close()
-
-            # Add image to array
-            img = cv2.imread('cycles/discharge_' + str(disch) + '.png')
-            height, width, layers = img.shape
-            size = (width, height)
-            disch_images.append(img)
-
-            # Save raw data to csv file
-            np.savetxt('cycles/discharge_' + str(disch) + '.csv', np.column_stack((-1*group['Q charge/discharge/mA.h'], group['Ewe/V'])), delimiter=',')
-            disch += 1
-
-
-        # Charge cycle
-        else:
-            plt.figure()
-            plt.plot(group['Q charge/discharge/mA.h'], group['Ewe/V'], '-o')
-            plt.xlabel('Capacity (mAh)')
-            plt.ylabel('Voltage (V)')
-            plt.title(str(ch) + '$^{th}$ charge')
-            plt.ylim(voltage_limits)
-            if same_xlim_every_cycle == True:
-                plt.xlim([0, max(ch_capacity)])
-            plt.savefig('cycles/charge_' + str(ch) + '.png')
-            plt.close()
-
-            # Add image to array
-            img = cv2.imread('cycles/charge_' + str(ch) + '.png')
-            ch_images.append(img)
-
-            # Save raw data to csv file
-            np.savetxt('cycles/charge_' + str(ch) + '.csv', np.column_stack((group['Q charge/discharge/mA.h'], group['Ewe/V'])), delimiter=',')
-            ch += 1
-
-
-    # Save to video
-    disch_video = cv2.VideoWriter('discharge_profiles.mp4', 
-    cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
-    ch_video = cv2.VideoWriter('charge_profiles.mp4', 
-    cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
-    for image in disch_images:
-        disch_video.write(image)
-    for image in ch_images:
-        ch_video.write(image)
-    disch_video.release()
-    ch_video.release()
-
-
-    ###############################################################################
-    # Plot all discharge profiles in a single plot
-    ###############################################################################
-    plt.figure()
-    counter = 0
-    for index in grouped.indices.keys():
-        if is_it_discharging(grouped.get_group(index)) == True:
-            data = grouped.get_group(index)
-            plt.plot(-1*data['Q charge/discharge/mA.h'], data['Ewe/V'], 
-            color=colorFader(color1, color2, counter/len(disch_images)))
-            counter += 1
-    plt.title('Discharge cycles')
-    plt.xlabel('Capacity (mAh)')
-    plt.ylabel('Voltage (V)')
-    plt.ylim(1.5, 4.8)
-    plt.savefig('combined_discharge_profiles.png')
-    plt.close()
-
-
-    ###############################################################################
-    # Plot all charge profiles in a single plot
-    ###############################################################################
-    plt.figure()
-    counter = 0
-    for index in grouped.indices.keys():
-        if is_it_discharging(grouped.get_group(index)) == False:
-            data = grouped.get_group(index)
-            plt.plot(data['Q charge/discharge/mA.h'], data['Ewe/V'], 
-            color=colorFader(color1, color2, counter/len(ch_images)))
-            counter += 1
-    plt.title('Charge cycles')
-    plt.xlabel('Capacity (mAh)')
-    plt.ylabel('Voltage (V)')
-    plt.ylim(1.5, 4.8)
-    plt.savefig('combined_charge_profiles.png')
-    plt.close()
 
 
 ###############################################################################
 # Main
 ###############################################################################
+startTime = datetime.now()
 
 # Make directories for plots
 os.makedirs('time_series',exist_ok=True)
@@ -502,24 +324,31 @@ else:
     mpr_file = BioLogic.MPRfile(filename)
     data = pd.DataFrame(mpr_file.data)
 
+
 # Plot all imp. time series data
-os.makedirs('time_series', exist_ok=True)
 plot_all_time_series(data)
+print('Plotted all time series data.')
+
 
 # Plot voltage vs capacity referenced to initial capacity
 plot_voltage_capacity_ref_initial(data)
+print('Plotted voltage vs capacity referenced to initial capacity.')
+
 
 # Remove OCV part for all cycles
 if remove_OCV_part:
     data.drop(data[data['dQ/mA.h'] == 0].index, inplace=True)
 
+
 # Plot charge/discharge capacity vs cycles
 disch_capacity, ch_capacity = plot_capacity_vs_cycle(data)
+print('Plotted charge/discharge capacity vs cycles.')
 
 
 # Plot charge/discharge profiles
 plot_charge_discharge_profiles(data, disch_capacity, ch_capacity)
+print('Plotted charge/discharge profiles.')
 
-print("Done")
+print("Finished execution in %s."  % (datetime.now() - startTime) )
 ###############################################################################
 
