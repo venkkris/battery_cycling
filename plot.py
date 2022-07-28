@@ -216,7 +216,9 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
             disch_images.append(img)
 
             # Save raw data to csv file
-            np.savetxt('cycles/discharge_' + str(disch) + '.csv', np.column_stack((-1*group['Q charge/discharge/mA.h'], group['Ewe/V'])), delimiter=',')
+            np.savetxt('cycles/discharge_' + str(disch) + '.csv', 
+            np.column_stack((-1*group['Q charge/discharge/mA.h'], group['Ewe/V'])), 
+            delimiter=',')
             disch += 1
 
 
@@ -238,7 +240,9 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
             ch_images.append(img)
 
             # Save raw data to csv file
-            np.savetxt('cycles/charge_' + str(ch) + '.csv', np.column_stack((group['Q charge/discharge/mA.h'], group['Ewe/V'])), delimiter=',')
+            np.savetxt('cycles/charge_' + str(ch) + '.csv', 
+            np.column_stack((group['Q charge/discharge/mA.h'], group['Ewe/V'])), 
+            delimiter=',')
             ch += 1
 
 
@@ -291,6 +295,8 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
     plt.ylim(voltage_limits)
     plt.savefig('main_out/combined_charge_profiles.png')
     plt.close()
+
+
 
 
 
@@ -348,6 +354,7 @@ print('Plotted charge/discharge capacity vs cycles.')
 # Plot charge/discharge profiles
 plot_charge_discharge_profiles(data, disch_capacity, ch_capacity)
 print('Plotted charge/discharge profiles.')
+
 
 print("Finished execution in %s."  % (datetime.now() - startTime) )
 ###############################################################################
