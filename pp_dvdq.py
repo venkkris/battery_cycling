@@ -11,7 +11,7 @@ def colorFader(c1,c2,mix=0):
     return mpl.colors.to_hex((1-mix)*c1 + mix*c2)
 
 
-def smoothen_dqdv(data, smooth_type):
+def smoothen_dvdq(data, smooth_type):
     """
     Smoothen the dQ/dV data.
     Currently implements rolling average of 3 and Savitzky-Golay.
@@ -25,7 +25,7 @@ def smoothen_dqdv(data, smooth_type):
     """
 
     if smooth_type == 'rolling':
-        data['dqdv'] = data['dqdv'].rolling(3).mean()
+        data['dvdq'] = data['dvdq'].rolling(3).mean()
 
     elif smooth_type == 'savitzky_golay':
         raise NotImplementedError
@@ -35,39 +35,39 @@ def smoothen_dqdv(data, smooth_type):
 
 ###############################################################################
 cycle_nums = [5, 10]
-voltage_limits = [1.5, 4.8]         # x limits
+voltage_limits = [0, 3]         # x limits
 smooth_type = 'rolling'           # 'None', 'rolling' or 'savitzky-golay'
 
-dqdv_color1 = '#53a4ec'
-dqdv_color2 = '#092d4d'
+dvdq_color1 = '#53a4ec'
+dvdq_color2 = '#092d4d'
 ###############################################################################
 
 
 for index, cycle_num in enumerate(cycle_nums):
-    color = colorFader(dqdv_color1, dqdv_color2, mix=index/len(cycle_nums))
+    color = colorFader(dvdq_color1, dvdq_color2, mix=index/len(cycle_nums))
     # Charge data
-    ch_data = pd.read_csv('cycles/charge_'+str(cycle_num)+'_dQdV.csv', 
-    names=['voltage', 'dqdv'])
-    ch_data = smoothen_dqdv(ch_data, smooth_type)
-    plt.plot(ch_data['voltage'], ch_data['dqdv'], label='Cycle '+str(cycle_num),
+    ch_data = pd.read_csv('cycles/charge_'+str(cycle_num)+'_dVdQ.csv', 
+    names=['capacity', 'dvdq'])
+    ch_data = smoothen_dvdq(ch_data, smooth_type)
+    plt.plot(ch_data['capacity'], ch_data['dvdq'], label='Cycle '+str(cycle_num),
     linestyle='solid', color=color, linewidth=3, markersize=15)
 
     # Horizontal line at 0
     plt.axhline(y=0, color='black', linestyle='dashed', linewidth=1.5)
 
     # Discharge data
-    disch_data = pd.read_csv('cycles/discharge_'+str(cycle_num)+'_dQdV.csv', 
-    names=['voltage', 'dqdv'])
-    disch_data = smoothen_dqdv(disch_data, smooth_type)
-    plt.plot(disch_data['voltage'], disch_data['dqdv'],
+    disch_data = pd.read_csv('cycles/discharge_'+str(cycle_num)+'_dVdQ.csv', 
+    names=['capacity', 'dvdq'])
+    disch_data = smoothen_dvdq(disch_data, smooth_type)
+    plt.plot(disch_data['capacity'], disch_data['dvdq'],
     linestyle='solid', color=color, linewidth=3, markersize=15)
 
 
-plt.xlabel('Voltage (V)',
+plt.xlabel('Capacity (mAh)',
 fontweight='bold', fontname='Times New Roman', fontsize=20)
-plt.ylabel('dq/dV (mAh/V)',
+plt.ylabel('dV/dq (mAh/V)',
 fontweight='bold', fontname='Times New Roman', fontsize=20)
-plt.title('Differential capacity',
+plt.title('Differential voltage vs. Capacity',
 fontweight='bold', fontname='Times New Roman', fontsize=20)
 plt.legend(loc='best', fontsize=15)
 
@@ -76,5 +76,5 @@ plt.minorticks_on()
 plt.tick_params(axis='both', which='minor', length=4, width=1)
 plt.tick_params(axis='both', which='major', labelsize=14, length=7, width=1.5)
 
-plt.savefig('pretty_plots/dQdV.png', dpi=300, bbox_inches='tight')
+plt.savefig('pretty_plots/dVdQ.png', dpi=300, bbox_inches='tight')
 plt.close()

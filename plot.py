@@ -25,6 +25,7 @@ remove_OCV_part = True           # Removes OCV part for plot of each cycle; not 
 stitch_files = True              # Stitches together multiple files into one dataframe; use when multiple files are part of one test
 
 dqdv_rel_tol = 0.01             # Relative tolerance for dQ/dV
+dvdq_rel_tol = 0.01             # Relative tolerance for dV/dQ
 
 color1 = 'red'
 color2 = 'black'
@@ -420,9 +421,11 @@ def save_dQ_dV_data(ch_capacity, disch_capacity):
         data = pd.read_csv(filename, names=['charge', 'voltage'])
 
         # Filter data: Remove point if voltage is the same as previous to dqdv_rel_tol V
+        indices_to_drop = []
         for i in range(1, len(data)):
             if isclose(data['voltage'][i], data['voltage'][i-1], rel_tol=dqdv_rel_tol):
-                data.drop(i)
+                indices_to_drop.append(i)
+        data = data.drop(indices_to_drop)
         q, v = data['charge'].values, data['voltage'].values
 
         # Compute dQ/dV using centered finite difference
@@ -437,6 +440,42 @@ def save_dQ_dV_data(ch_capacity, disch_capacity):
     return None
 
 
+def save_dV_dQ_data(ch_capacity, disch_capacity):
+    """
+    Function reads from cycles/*_i.csv files and saves to cycles/*_i_dVdQ.csv
+    where * = 'charge' or 'discharge' and i is integer representing cycle number.
+    Uses ch_capacity, disch_capacity to get filenames.
+    Columns: charge, dQ/dV
+    """
+    filenames = []
+    for i in range(len(ch_capacity)):
+        filenames.append('cycles/' + 'charge_' + str(i+1) + '.csv')
+    for i in range(len(disch_capacity)):
+        filenames.append('cycles/' + 'discharge_' + str(i+1) + '.csv')
+
+
+    for filename in filenames:
+        data = pd.read_csv(filename, names=['charge', 'voltage'])
+
+        indices_to_drop = []
+        # Filter data
+        for i in range(1, len(data)):
+            if isclose(data['charge'][i], data['charge'][i-1], rel_tol=dvdq_rel_tol):
+                indices_to_drop.append(i)
+        data = data.drop(indices_to_drop)
+
+        q, v = data['charge'].values, data['voltage'].values
+
+        # Compute dV/dQ using centered finite difference
+        dvdq = [ (v[1]-v[0])/(q[1]-q[0]) ]
+        for i in range(1, len(q)-1):
+            dvdq.append( (v[i+1] - v[i-1])/(q[i+1]-q[i-1]) )
+        dvdq.append( (v[-1]-v[-2])/(q[-1]-q[-2]) )
+        # Save to file
+        np.savetxt(filename[:-4] + '_dVdQ.csv', np.column_stack((q, dvdq)), delimiter=',')
+    
+    print(str(datetime.now() - startTime)+' Saved dV/dQ data.')
+    return None
 
 
 ###############################################################################
@@ -450,7 +489,7 @@ os.makedirs('pretty_plots/',exist_ok=True)
 
 data = data_tailor()
 plot_all_time_series(data)   
-# plot_voltage_capacity_ref_initial(data)
+plot_voltage_capacity_ref_initial(data)
 
 # Remove OCV part for all cycles
 if remove_OCV_part:
@@ -464,6 +503,9 @@ plot_charge_discharge_profiles(data, disch_capacity, ch_capacity)
 
 # Save dQ/dV data
 save_dQ_dV_data(ch_capacity, disch_capacity)
+
+# Save dV/dQ data
+save_dV_dQ_data(ch_capacity, disch_capacity)
 
 
 print("%s Finished execution."  % (datetime.now() - startTime) )
