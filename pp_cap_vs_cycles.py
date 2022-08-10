@@ -37,7 +37,7 @@ plt.ylabel('Capacity (mAh)',
 fontweight='bold', fontname='Times New Roman', fontsize=20)
 plt.title('Capacity vs cycles',
 fontweight='bold', fontname='Times New Roman', fontsize=20)
-plt.legend(loc='upper right', fontsize=15)
+plt.legend(loc='best', fontsize=15)
 
 plt.minorticks_on()
 plt.tick_params(axis='both', which='minor', length=4, width=1)

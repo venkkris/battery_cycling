@@ -24,8 +24,8 @@ voltage_limits = [1.5, 4.8]      # Voltage limits for all plots
 remove_OCV_part = True           # Removes OCV part for plot of each cycle; not removed for time series plots
 stitch_files = True              # Stitches together multiple files into one dataframe; use when multiple files are part of one test
 
-dqdv_rel_tol = 0.01             # Relative tolerance for dQ/dV
-dvdq_rel_tol = 0.01             # Relative tolerance for dV/dQ
+dqdv_rel_tol = 0.001             # Relative tolerance for dQ/dV
+dvdq_rel_tol = 0.001             # Relative tolerance for dV/dQ
 
 color1 = 'red'
 color2 = 'black'
