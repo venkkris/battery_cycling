@@ -1,31 +1,34 @@
 #!/bin/bash
 
-# Absolute path to REBECCA
-REBECCA_PATH="/Users/venkatesh/Desktop/battery_cycling/"
+: '
+Author: Venkatesh Krishnamurthy
+Copy this script to a folder containing a subfolder named REBECCA with the python scripts inside the subfolder.
+All other subfolders must contain the mpr file(s) inside them.
+This script will copy all python files inside the REBECCA subfolder into the subfolders and execute them.
+'
 
-# List files in REBECCA_PATH, ask user if files are correct
-echo "Listing files in REBECCA folder:"
-ls $REBECCA_PATH
-echo "Is this the correct path to REBECCA? (y/n)"
-read answer
-
-if [ $answer = "y" ]; then
-    echo "Starting batch processing..."
-
-    for file in *.mpr
-    do
-        echo
-        echo "Processing $file"
-        mkdir "${file%.*}"
-        mv $file ${file%.*}
-        cd ${file%.*}
-        cp $REBECCA_PATH*.py .
-        python plot.py
-        cd ..
-    done
-
+# Check if REBECCA folder exists
+if [ -d "REBECCA" ]; then
+    echo "REBECCA folder exists."
 else
-    echo "Exiting"
+    echo "REBECCA folder does not exist. Exiting..."
+    exit 1
 fi
 
-unset REBECCA_PATH
+for dir in *
+do
+    if [ -d $dir ]
+    then
+        if [ $dir != "REBECCA" ]
+        then
+            echo "\nExecuting in $dir..."
+            cp REBECCA/* $dir
+            cd $dir
+            python plot.py
+            cd ..
+
+        else
+            continue
+        fi
+    fi
+done
