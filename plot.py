@@ -11,7 +11,6 @@ import cv2
 import numpy as np
 import glob
 import os
-from math import isclose
 from datetime import datetime
 
 
@@ -19,20 +18,25 @@ from datetime import datetime
 # Important variables
 ###############################################################################
 
-same_xlim_every_cycle = True     # Uses same xlim i.e. charge/discharge capacity for all cycles
+same_xlim_every_cycle = True     # Uses same xlim i.e. capacity for all cycles
 voltage_limits = [1.5, 4.8]      # Voltage limits for all plots
 remove_OCV_part = True           # Removes OCV part for plot of each cycle; not removed for time series plots
 stitch_files = True              # Stitches together multiple files into one dataframe; use when multiple files are part of one test
+dqdv_tol = 0.001                 # Absolute tolerance for dQ/dV
 
-dqdv_rel_tol = 0.001             # Relative tolerance for dQ/dV
-dvdq_rel_tol = 0.001             # Relative tolerance for dV/dQ
 
 color1 = 'red'
 color2 = 'black'
 color_ch = '#0069c0'
 color_disch = '#0069c0'
 color_CE = '#0069c0'
-CE_100pc_line = True   # Add line at 100% Coulombic efficiency
+CE_100pc_line = True    # Add line at 100% Coulombic efficiency
+# CE_ylim = [1, 101]      # Comment it out to use default ylimits for CE plot
+
+# Note: If plot_all_cycles is false, save_to_video variable is ignored
+save_to_video = False   # Save each charge/discharge cycle video or not
+plot_all_cycles = False # Save each charge/discharge profile or not
+fps = 24                # Frames per second for video
 
 # Other colors
 # color = '#0047ab' # Cobalt blue
@@ -64,7 +68,17 @@ def is_it_discharging(group):
     Returns:
     True if discharging, False if charging or no current"""
 
-    if group['control/V/mA'].iloc[10] < 0:
+    # Previous implementation throws errors when number of datapoints is less
+    # if group['control/V/mA'].iloc[10] < 0:
+    #     return True
+    # else:
+    #     return False
+
+
+    # Newer implementation: 
+    # Checks for total charge passed in that cycle.
+    # If negative, it is discharging
+    if group['Q charge/discharge/mA.h'].iloc[-1] < 0:
         return True
     else:
         return False
@@ -249,13 +263,16 @@ def plot_capacity_vs_cycle(data):
 
     plt.figure()
     plt.plot(x, y, linestyle='solid', color=color_CE, linewidth=3, markersize=15)
-    # Plot 100% line
-    if CE_100pc_line:
-        plt.plot(x, [100]*len(x), 
-        linestyle='dashed', color='k', linewidth=3, markersize=15) 
-        plt.ylim(min(*y,100)-2, max(*y, 100)+2)
-    else:
-        plt.ylim(min(y)-2, max(y)+2)
+
+    try:
+        plt.ylim(CE_ylim)
+    except NameError:
+        if CE_100pc_line:       # Plot 100% line
+            plt.plot(x, [100]*len(x), 
+            linestyle='dashed', color='k', linewidth=3, markersize=15) 
+            plt.ylim(min(*y,100)-2, max(*y, 100)+2)
+        else:
+            plt.ylim(min(y)-2, max(y)+2)
     plt.xlim(1, num_cycles)
 
     plt.xlabel('Number of cycles',
@@ -303,22 +320,24 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
 
         # If discharge i.e. current is negative
         if is_it_discharging(group) == True:
-            plt.figure()
-            plt.plot(-1*group['Q charge/discharge/mA.h'], group['Ewe/V'], '-o')
-            plt.xlabel('Capacity (mAh)')
-            plt.ylabel('Voltage (V)')
-            plt.title(str(disch) + '$^{th}$ discharge')
-            plt.ylim(voltage_limits)
-            if same_xlim_every_cycle == True:
-                plt.xlim([0, max(disch_capacity)])
-            plt.savefig('cycles/discharge_' + str(disch) + '.png')
-            plt.close()
+            if plot_all_cycles:
+                plt.figure()
+                plt.plot(-1*group['Q charge/discharge/mA.h'], group['Ewe/V'], '-o')
+                plt.xlabel('Capacity (mAh)')
+                plt.ylabel('Voltage (V)')
+                plt.title(str(disch) + '$^{th}$ discharge')
+                plt.ylim(voltage_limits)
+                if same_xlim_every_cycle == True:
+                    plt.xlim([0, max(disch_capacity)])
+                plt.savefig('cycles/discharge_' + str(disch) + '.png')
+                plt.close()
 
-            # Add image to array
-            img = cv2.imread('cycles/discharge_' + str(disch) + '.png')
-            height, width, layers = img.shape
-            size = (width, height)
-            disch_images.append(img)
+                if save_to_video:
+                    # Add image to array
+                    img = cv2.imread('cycles/discharge_' + str(disch) + '.png')
+                    height, width, layers = img.shape
+                    size = (width, height)
+                    disch_images.append(img)
 
             # Save raw data to csv file
             np.savetxt('cycles/discharge_' + str(disch) + '.csv', 
@@ -329,20 +348,22 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
 
         # Charge cycle
         else:
-            plt.figure()
-            plt.plot(group['Q charge/discharge/mA.h'], group['Ewe/V'], '-o')
-            plt.xlabel('Capacity (mAh)')
-            plt.ylabel('Voltage (V)')
-            plt.title(str(ch) + '$^{th}$ charge')
-            plt.ylim(voltage_limits)
-            if same_xlim_every_cycle == True:
-                plt.xlim([0, max(ch_capacity)])
-            plt.savefig('cycles/charge_' + str(ch) + '.png')
-            plt.close()
+            if plot_all_cycles:
+                plt.figure()
+                plt.plot(group['Q charge/discharge/mA.h'], group['Ewe/V'], '-o')
+                plt.xlabel('Capacity (mAh)')
+                plt.ylabel('Voltage (V)')
+                plt.title(str(ch) + '$^{th}$ charge')
+                plt.ylim(voltage_limits)
+                if same_xlim_every_cycle == True:
+                    plt.xlim([0, max(ch_capacity)])
+                plt.savefig('cycles/charge_' + str(ch) + '.png')
+                plt.close()
 
-            # Add image to array
-            img = cv2.imread('cycles/charge_' + str(ch) + '.png')
-            ch_images.append(img)
+                if save_to_video:
+                    # Add image to array
+                    img = cv2.imread('cycles/charge_' + str(ch) + '.png')
+                    ch_images.append(img)
 
             # Save raw data to csv file
             np.savetxt('cycles/charge_' + str(ch) + '.csv', 
@@ -350,18 +371,19 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
             delimiter=',')
             ch += 1
 
+    if save_to_video:
+        # Save videos
+        disch_video = cv2.VideoWriter('main_out/discharge_profiles.mp4', 
+        cv2.VideoWriter_fourcc(*'mp4v'), fps, size)
+        for image in disch_images:
+            disch_video.write(image)
+        disch_video.release()
 
-    # Save to video
-    disch_video = cv2.VideoWriter('main_out/discharge_profiles.mp4', 
-    cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
-    ch_video = cv2.VideoWriter('main_out/charge_profiles.mp4', 
-    cv2.VideoWriter_fourcc(*'mp4v'), 1, size)
-    for image in disch_images:
-        disch_video.write(image)
-    for image in ch_images:
-        ch_video.write(image)
-    disch_video.release()
-    ch_video.release()
+        ch_video = cv2.VideoWriter('main_out/charge_profiles.mp4', 
+        cv2.VideoWriter_fourcc(*'mp4v'), fps, size)
+        for image in ch_images:
+            ch_video.write(image)
+        ch_video.release()
 
 
     ###############################################################################
@@ -373,7 +395,7 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
         if is_it_discharging(grouped.get_group(index)) == True:
             data = grouped.get_group(index)
             plt.plot(-1*data['Q charge/discharge/mA.h'], data['Ewe/V'], 
-            color=colorFader(color1, color2, counter/len(disch_images)))
+            color=colorFader(color1, color2, counter/len(disch_capacity)))
             counter += 1
     plt.title('Discharge cycles')
     plt.xlabel('Capacity (mAh)')
@@ -392,7 +414,7 @@ def plot_charge_discharge_profiles(data, disch_capacity, ch_capacity):
         if is_it_discharging(grouped.get_group(index)) == False:
             data = grouped.get_group(index)
             plt.plot(data['Q charge/discharge/mA.h'], data['Ewe/V'], 
-            color=colorFader(color1, color2, counter/len(ch_images)))
+            color=colorFader(color1, color2, counter/len(ch_capacity)))
             counter += 1
     plt.title('Charge cycles')
     plt.xlabel('Capacity (mAh)')
@@ -421,18 +443,33 @@ def save_dQ_dV_data(ch_capacity, disch_capacity):
         data = pd.read_csv(filename, names=['charge', 'voltage'])
 
         # Filter data: Remove point if voltage is the same as previous to dqdv_rel_tol V
-        indices_to_drop = []
+        q = []
+        v = []
+        q.append(data['charge'].iloc[0])
+        v.append(data['voltage'].iloc[0])
         for i in range(1, len(data)):
-            if isclose(data['voltage'][i], data['voltage'][i-1], rel_tol=dqdv_rel_tol):
-                indices_to_drop.append(i)
-        data = data.drop(indices_to_drop)
-        q, v = data['charge'].values, data['voltage'].values
+            if abs(data['voltage'].iloc[i] - v[-1]) >= dqdv_tol:
+                    q.append(data['charge'][i])
+                    v.append(data['voltage'][i])
+            else:
+                continue
 
-        # Compute dQ/dV using centered finite difference
-        dqdv = [0]
+        """
+        # Compute dQ/dV using centered finite difference;
+        # uses forward and backward difference for first and last point
+        dqdv = []
+        dqdv.append( (q[1]-q[0])/(v[1]-v[0]) )
         for i in range(1, len(q)-1):
             dqdv.append( (q[i+1] - q[i-1])/(v[i+1]-v[i-1]) )
-        dqdv.append(0)
+        dqdv.append( (q[-1]-q[-2])/(v[-1]-v[-2]) )
+        """
+        # Compute dQ/dV using forward difference;
+        # uses backward difference for last point
+        dqdv = []
+        for i in range(len(q)-1):
+            dqdv.append( (q[i+1] - q[i])/(v[i+1]-v[i]) )
+        dqdv.append( (q[-1]-q[-2])/(v[-1]-v[-2]) )
+
         # Save to file
         np.savetxt(filename[:-4] + '_dQdV.csv', np.column_stack((v, dqdv)), delimiter=',')
     
@@ -456,22 +493,24 @@ def save_dV_dQ_data(ch_capacity, disch_capacity):
 
     for filename in filenames:
         data = pd.read_csv(filename, names=['charge', 'voltage'])
-
-        indices_to_drop = []
-        # Filter data
+        # Filter data: Remove point if charge is the same as previous
+        q = []
+        v = []
+        q.append(data['charge'].iloc[0])
+        v.append(data['voltage'].iloc[0])
         for i in range(1, len(data)):
-            if isclose(data['charge'][i], data['charge'][i-1], rel_tol=dvdq_rel_tol):
-                indices_to_drop.append(i)
-        data = data.drop(indices_to_drop)
+            if data['charge'].iloc[i] != q[-1]:
+                q.append(data['charge'][i])
+                v.append(data['voltage'][i])
 
-        q, v = data['charge'].values, data['voltage'].values
 
-        # Compute dV/dQ using centered finite difference
+        # Compute dV/dQ using centered finite difference; 
+        # forward or backward difference for 1st and last point
         dvdq = [ (v[1]-v[0])/(q[1]-q[0]) ]
         for i in range(1, len(q)-1):
             dvdq.append( (v[i+1] - v[i-1])/(q[i+1]-q[i-1]) )
         dvdq.append( (v[-1]-v[-2])/(q[-1]-q[-2]) )
-        # Save to file
+
         np.savetxt(filename[:-4] + '_dVdQ.csv', np.column_stack((q, dvdq)), delimiter=',')
     
     print(str(datetime.now() - startTime)+' Saved dV/dQ data.')
@@ -501,10 +540,8 @@ disch_capacity, ch_capacity = plot_capacity_vs_cycle(data)
 # Plot charge/discharge profiles
 plot_charge_discharge_profiles(data, disch_capacity, ch_capacity)
 
-# Save dQ/dV data
+# Save dQ/dV, dQ/dV data
 save_dQ_dV_data(ch_capacity, disch_capacity)
-
-# Save dV/dQ data
 save_dV_dQ_data(ch_capacity, disch_capacity)
 
 

@@ -17,18 +17,18 @@ fi
 
 for dir in *
 do
-    if [ -d $dir ]
+    if [ -d $dir ] && [ $dir != "REBECCA" ]      # Check if it's a folder but not named REBECCA
     then
-        if [ $dir != "REBECCA" ]
-        then
-            echo "\nExecuting in $dir..."
-            cp REBECCA/* $dir
-            cd $dir
-            python plot.py
-            cd ..
-
+        cd $dir
+        # Check if main_out folder exists; skip if it exists in subfolder
+        if [ -d "main_out" ]; then
+            echo "\nSkipping $dir because it's been executed before..."
         else
-            continue
+            echo "\nExecuting in $dir..."
+            cp ../REBECCA/plot.py .
+            python plot.py >> rebecca.log
+            rm plot.py
+            cd ..                
         fi
     fi
 done

@@ -1,0 +1,3 @@
+This directory contains matlab scripts used for pretty plotting 
+using the files created by the main i.e. plot.py script.
+Deprecated; scripts exist for archiving purposes.
