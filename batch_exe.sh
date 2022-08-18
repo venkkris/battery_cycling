@@ -21,14 +21,15 @@ do
     then
         cd $dir
         # Check if main_out folder exists; skip if it exists in subfolder
-        if [ -d "main_out" ]; then
+        if [ -d "main_out" ]
+        then
             echo "\nSkipping $dir because it's been executed before..."
         else
             echo "\nExecuting in $dir..."
             cp ../REBECCA/plot.py .
             python plot.py >> rebecca.log
-            rm plot.py
-            cd ..                
+            rm plot.py                
         fi
+        cd ..
     fi
 done
