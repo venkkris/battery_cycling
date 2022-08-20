@@ -464,11 +464,13 @@ def save_dQ_dV_data(ch_capacity, disch_capacity):
         dqdv.append( (q[-1]-q[-2])/(v[-1]-v[-2]) )
         """
         # Compute dQ/dV using forward difference;
-        # uses backward difference for last point
-        dqdv = []
-        for i in range(len(q)-1):
+        # sets 1st and last point to 0
+        dqdv = [0]
+        for i in range(1, len(q)-1):
             dqdv.append( (q[i+1] - q[i])/(v[i+1]-v[i]) )
-        dqdv.append( (q[-1]-q[-2])/(v[-1]-v[-2]) )
+        # dqdv.append( (q[-1]-q[-2])/(v[-1]-v[-2]) )
+        dqdv.append(0)
+
 
         # Save to file
         np.savetxt(filename[:-4] + '_dQdV.csv', np.column_stack((v, dqdv)), delimiter=',')
